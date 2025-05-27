@@ -21,7 +21,10 @@ COPY src src
 COPY --from=frontend-build /app/frontend/build src/main/resources/static
 
 # build the JAR
-RUN mvn clean package -DskipTests
+# after you've run mvn dependency:go-offline
+COPY src src
+COPY --from=frontend-build /app/frontend/build src/main/resources/static
+RUN mvn clean package spring-boot:repackage -DskipTests
 
 # ─── Stage 3: Runtime image ─────────────────────────
 FROM eclipse-temurin:17-jre-jammy
