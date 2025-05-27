@@ -14,7 +14,7 @@ export default function ZonesList() {
         <div>
             <h1>Zones</h1>
             {zones.length === 0
-                ? <p>Loading...</p>
+                ? <p>Loading..</p>
                 : <ul>
                     {zones.map(z => <li key={z.id}>{z.name}</li>)}
                 </ul>
