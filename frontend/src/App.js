@@ -1,12 +1,12 @@
+// src/App.jsx
 import React from 'react';
-import ZonesList from './components/ZonesList';
+import ZonesView from './components/ZonesView';
 
 function App() {
-  return (
-      <div className="App">
-        <ZonesList />
-      </div>
-  );
+    return (
+        <div className="max-w-4xl mx-auto">
+            <ZonesView />
+        </div>
+    );
 }
-
 export default App;
