@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaf
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import ZoneSetupModal from './ZoneSetupModal';
+import {Link} from "react-router-dom";
 
 // fix default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -32,6 +33,7 @@ export default function ZonesView() {
     useEffect(() => {
         axios.get('/api/zones')
             .then(res => {
+                console.log('Fetched zones:', res.data)
                 setZones(res.data);
                 const missing = res.data.find(z => z.latitude == null || z.longitude == null);
                 if (missing) setSetupZone(missing);
@@ -73,6 +75,12 @@ export default function ZonesView() {
                                 <div className="text-sm text-gray-600">UID: {z.controllerUid}</div>
                                 <div className="text-sm text-gray-600">Info: {z.extraInfo}</div>
                                 <div className="text-sm text-gray-500">{`${z.latitude?.toFixed(4)}, ${z.longitude?.toFixed(4)}`}</div>
+                                <Link
+                                  to={`/zones/${z.id}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  More info →
+                                </Link>
                             </li>
                         ))}
                     </ul>
@@ -105,6 +113,9 @@ export default function ZonesView() {
                                     <Popup>
                                         <strong>{z.name}</strong><br />
                                         {z.latitude.toFixed(4)}, {z.longitude.toFixed(4)}
+                                        <Link to={`/zones/${z.id}`} className="text-blue-600">
+                                          More info
+                                        </Link>
                                     </Popup>
                                 </Marker>
                             ))}

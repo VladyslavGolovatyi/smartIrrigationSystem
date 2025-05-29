@@ -1,5 +1,6 @@
 package com.example.smartirrigationsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,7 @@ public class SoilMoistureReading {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subzone_id", nullable = false)
+    @JsonBackReference
     private SubZone subZone;
 
     @Column(name = "moisture_percent", nullable = false)
@@ -41,5 +43,11 @@ public class SoilMoistureReading {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public SoilMoistureReading(SubZone subZone, Integer moisturePercent, LocalDateTime recordedAt) {
+        this.subZone = subZone;
+        this.moisturePercent = moisturePercent;
+        this.recordedAt = recordedAt;
     }
 }

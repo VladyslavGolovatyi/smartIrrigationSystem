@@ -12,9 +12,9 @@ public class IrrigationService {
     private final ManualIrrigationRequestRepository reqRepo;
     public ManualIrrigationRequest request(Integer subZoneId, int durationSec) {
         ManualIrrigationRequest r = new ManualIrrigationRequest();
-        r.setSubZone(new SubZone(subZoneId,null,null,null,null, null));
-        r.setDurationSeconds(durationSec);
-        r.setExecuted(false);
+//        r.setSubZone(new SubZone(subZoneId,null,null,null,null, null));
+//        r.setDurationSeconds(durationSec);
+//        r.setExecuted(false);
         return reqRepo.save(r);
     }
 }

@@ -1,11 +1,16 @@
 package com.example.smartirrigationsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -21,10 +26,14 @@ public class SubZone {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zone_id", nullable = false)
+    @JsonBackReference
     private Zone zone;
 
     @Column(length = 100)
     private String name;
+
+    @Column(nullable = false)
+    private Integer subzoneIndex;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plant_type_id")
@@ -37,6 +46,14 @@ public class SubZone {
     @Column(columnDefinition = "TEXT")
     private String extraInfo;
 
+    @OneToMany(mappedBy = "subZone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<SoilMoistureReading> soilMoistureReadings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subZone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<RainSensorReading> rainSensorReadings = new ArrayList<>();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -48,5 +65,10 @@ public class SubZone {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public SubZone(Integer subzoneIndex, Zone zone) {
+        this.subzoneIndex = subzoneIndex;
+        this.zone = zone;
     }
 }

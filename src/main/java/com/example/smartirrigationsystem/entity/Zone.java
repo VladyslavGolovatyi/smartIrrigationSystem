@@ -1,11 +1,15 @@
 package com.example.smartirrigationsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -19,7 +23,6 @@ public class Zone {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, length = 100)
     private String name;
 
     private Double latitude;
@@ -32,6 +35,10 @@ public class Zone {
     @Column(name = "controller_uid", nullable = false, unique = true, length = 100)
     private String controllerUid;
 
+    @OneToMany(mappedBy = "zone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<SubZone> subZones = new ArrayList<>();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -43,5 +50,9 @@ public class Zone {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public Zone(String controllerUid) {
+        this.controllerUid = controllerUid;
     }
 }

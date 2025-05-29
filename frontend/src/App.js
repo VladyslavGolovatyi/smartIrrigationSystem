@@ -1,12 +1,17 @@
-// src/App.jsx
-import React from 'react';
-import ZonesView from './components/ZonesView';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ZonesView    from './components/ZonesView';
+import ZoneDetail   from './components/ZoneDetail';
+import SubzoneDetail from "./components/SubzoneDetail";
 
-function App() {
+export default function App() {
     return (
-        <div className="max-w-4xl mx-auto">
-            <ZonesView />
-        </div>
+        <BrowserRouter>
+            <Routes>
+                <Route path="/"          element={<Navigate to="/zones" replace />} />
+                <Route path="/zones"     element={<ZonesView />} />
+                <Route path="/zones/:id" element={<ZoneDetail />} />
+                <Route path="/zones/:zoneId/subzones/:subzoneId" element={<SubzoneDetail />} />
+            </Routes>
+        </BrowserRouter>
     );
 }
-export default App;
