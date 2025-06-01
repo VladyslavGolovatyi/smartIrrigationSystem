@@ -27,11 +27,6 @@ public class ZoneService {
             zone.getSubZones().forEach(subZone -> {
                 subZone.getIrrigationHistoryList().forEach(irrigationHistory -> {
                     boolean hasIssues = false;
-//                    if (irrigationHistory.getEndTime() == null || irrigationHistory.getStartTime() == null) {
-//                        hasIssues = true;
-//                    } else if (irrigationHistory.getEndTime().isBefore(irrigationHistory.getStartTime())) {
-//                        hasIssues = true;
-//                    }
                     zone.setHasIssues(hasIssues);
                 });
             });

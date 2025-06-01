@@ -3,6 +3,10 @@ import ZonesView    from './components/ZonesView';
 import ZoneDetail   from './components/ZoneDetail';
 import SubzoneDetail from "./components/SubzoneDetail";
 import ZoneEdit from "./components/ZoneEdit";
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+
 
 export default function App() {
     return (

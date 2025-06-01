@@ -68,6 +68,9 @@ public class SubZone {
 
     private Boolean hasIrrigationIssue;
 
+    private int defaultIrrigationDurationInSeconds = 10;
+    private int defaultRecheckIntervalInMinutes = 10;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
