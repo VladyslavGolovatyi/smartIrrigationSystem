@@ -8,7 +8,10 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +30,7 @@ public class SubZone {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zone_id", nullable = false)
     @JsonBackReference
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Zone zone;
 
     @Column(length = 100)
@@ -37,10 +41,12 @@ public class SubZone {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plant_type_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private PlantType plantType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "soil_type_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private SoilType soilType;
 
     @Column(columnDefinition = "TEXT")
@@ -53,6 +59,14 @@ public class SubZone {
     @OneToMany(mappedBy = "subZone", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<RainSensorReading> rainSensorReadings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subZone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<IrrigationHistory> irrigationHistoryList = new ArrayList<>();
+
+    private LocalDateTime lastIrrigationIssue;
+
+    private Boolean hasIrrigationIssue;
 
     @Override
     public boolean equals(Object o) {

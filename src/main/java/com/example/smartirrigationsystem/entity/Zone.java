@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +39,8 @@ public class Zone {
     @OneToMany(mappedBy = "zone", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<SubZone> subZones = new ArrayList<>();
+
+    private Boolean hasIssues = false;
 
     @Override
     public boolean equals(Object o) {

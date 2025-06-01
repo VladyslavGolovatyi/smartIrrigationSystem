@@ -7,6 +7,9 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.Objects;
 import java.time.LocalDateTime;
 
@@ -24,6 +27,7 @@ public class RainSensorReading {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subzone_id", nullable = false)
     @JsonBackReference
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private SubZone subZone;
 
     @Column(name = "is_raining", nullable = false)

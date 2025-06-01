@@ -1,47 +1,62 @@
 // frontend/src/components/ZonesView.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import ZoneSetupModal from './ZoneSetupModal';
 import { Link } from 'react-router-dom';
 
-// Fix default Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-    iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-});
+// Icon URLs (hosted on GitHub) for red and green markers:
+const RED_MARKER_URL =
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+const GREEN_MARKER_URL =
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png';
 
-function MapClickHandler({ onClick }) {
-    useMapEvents({
-        click(e) {
-            onClick([e.latlng.lat, e.latlng.lng]);
-        },
-    });
-    return null;
-}
+// Shadow URL (same for all markers):
+const SHADOW_URL =
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png';
+
+// Create L.Icon instances for red and green:
+const redIcon = new L.Icon({
+    iconUrl: RED_MARKER_URL,
+    shadowUrl: SHADOW_URL,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+});
+const greenIcon = new L.Icon({
+    iconUrl: GREEN_MARKER_URL,
+    shadowUrl: SHADOW_URL,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+});
 
 export default function ZonesView() {
     const [zones, setZones] = useState([]);
     const [view, setView] = useState('map');
     const [setupZone, setSetupZone] = useState(null);
-    const [markerCoords, setMarkerCoords] = useState(null);
     const [filter, setFilter] = useState('');
 
+    // Fetch all zones on mount
     useEffect(() => {
         axios
             .get('/api/zones')
             .then((res) => {
                 setZones(res.data);
+                // If any zone is missing lat/lng, open the setup modal
                 const missing = res.data.find((z) => z.latitude == null || z.longitude == null);
-                if (missing) setSetupZone(missing);
+                if (missing) {
+                    setSetupZone(missing);
+                }
             })
             .catch(console.error);
     }, []);
 
+    // Save updated coordinates (or name/info) for a zone
     const handleSave = (update) => {
         axios
             .put(`/api/zones/${setupZone.id}`, update)
@@ -52,9 +67,10 @@ export default function ZonesView() {
             .catch(console.error);
     };
 
+    // Default map center (Lviv) if no valid zone coordinates are available
     const defaultCenter = [49.8397, 24.0297];
 
-    // Safely apply name filter (handles null or undefined names)
+    // Filter zones by name (case‐insensitive)
     const filteredZones = zones.filter((z) =>
         (z.name ?? '').toLowerCase().includes(filter.trim().toLowerCase())
     );
@@ -62,7 +78,7 @@ export default function ZonesView() {
     return (
         <>
             <div className="container py-4">
-                {/* Zone/List selector and Filter */}
+                {/* ─── Top Controls: “List” / “Map” buttons + filter input ─── */}
                 <div className="d-flex align-items-center mb-3">
                     <div className="btn-group me-3" role="group" aria-label="View toggle">
                         <button
@@ -91,7 +107,7 @@ export default function ZonesView() {
                     )}
                 </div>
 
-                {/* LIST VIEW as Bootstrap scorecards */}
+                {/* ─── LIST VIEW as Bootstrap Scorecards ─── */}
                 {view === 'list' && (
                     <div className="row gx-3 gy-3">
                         {filteredZones.length === 0 && zones.length > 0 && (
@@ -103,7 +119,9 @@ export default function ZonesView() {
                         )}
                         {zones.length === 0 && (
                             <div className="col-12">
-                                <div className="alert alert-secondary text-center mb-0">Loading zones…</div>
+                                <div className="alert alert-secondary text-center mb-0">
+                                    Loading zones…
+                                </div>
                             </div>
                         )}
                         {filteredZones.map((z) => (
@@ -113,7 +131,7 @@ export default function ZonesView() {
                                         <div className="d-flex justify-content-between align-items-center mb-2">
                                             <h5 className="card-title mb-0">{z.name ?? '—'}</h5>
                                             <span
-                                                className={`rounded-circle ${z.isActive ? 'bg-success' : 'bg-danger'}`}
+                                                className={`rounded-circle ${z.hasIssues ? 'bg-danger' : 'bg-success'} flex-shrink-0`}
                                                 style={{ display: 'inline-block', width: '12px', height: '12px' }}
                                             ></span>
                                         </div>
@@ -129,7 +147,7 @@ export default function ZonesView() {
                     </div>
                 )}
 
-                {/* MAP VIEW */}
+                {/* ─── MAP VIEW ─── */}
                 {view === 'map' && (
                     <div className="card shadow-sm">
                         <div style={{ height: '500px' }}>
@@ -146,38 +164,26 @@ export default function ZonesView() {
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     attribution="© OpenStreetMap contributors"
                                 />
-                                <MapClickHandler onClick={setMarkerCoords} />
 
-                                {/* If user clicks on map, show a marker without coordinates */}
-                                {markerCoords && (
-                                    <Marker position={markerCoords}>
-                                        <Popup>
-                                            <strong>Marker</strong>
-                                        </Popup>
-                                    </Marker>
-                                )}
-
-                                {/* Zone markers */}
+                                {/* Zone markers: green if active, red if not */}
                                 {zones
                                     .filter((z) => z.latitude != null && z.longitude != null)
                                     .map((z) => (
-                                        <Marker key={z.id} position={[z.latitude, z.longitude]}>
+                                        <Marker
+                                            key={z.id}
+                                            position={[z.latitude, z.longitude]}
+                                            icon={z.hasIssues ? greenIcon : redIcon}
+                                        >
                                             <Popup>
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="fw-semibold">{z.name ?? '—'}</span>
-                                                    <span
-                                                        className={`rounded-circle ${
-                                                            z.isActive ? 'bg-success' : 'bg-danger'
-                                                        }`}
-                                                        style={{ display: 'inline-block', width: '12px', height: '12px' }}
-                                                    ></span>
+                                                <span className="fw-semibold">{z.name ?? '—'}</span>
+                                                <div className="mt-2">
+                                                    <Link
+                                                        to={`/zones/${z.id}`}
+                                                        className="btn btn-sm btn-outline-primary"
+                                                    >
+                                                        More Info
+                                                    </Link>
                                                 </div>
-                                                <Link
-                                                    to={`/zones/${z.id}`}
-                                                    className="btn btn-sm btn-outline-primary"
-                                                >
-                                                    More Info
-                                                </Link>
                                             </Popup>
                                         </Marker>
                                     ))}
@@ -187,10 +193,11 @@ export default function ZonesView() {
                 )}
             </div>
 
+            {/* ─── Zone setup modal (if a zone is missing coordinates) ─── */}
             {setupZone && (
                 <ZoneSetupModal
                     zone={setupZone}
-                    markerCoords={markerCoords}
+                    markerCoords={null}
                     onSave={handleSave}
                     onCancel={() => setSetupZone(null)}
                 />

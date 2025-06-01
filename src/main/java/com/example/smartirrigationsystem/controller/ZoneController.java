@@ -27,14 +27,8 @@ public class ZoneController {
             @PathVariable Integer id,
             @RequestBody Zone incoming
     ) {
-        Zone z = zoneRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        z.setName(incoming.getName());
-        z.setLatitude(incoming.getLatitude());
-        z.setLongitude(incoming.getLongitude());
-        z.setExtraInfo(incoming.getExtraInfo());
-        zoneRepo.save(z);
-        return ResponseEntity.ok(z);
+        Zone updated = zoneService.updateZone(id, incoming);
+        return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/readings")

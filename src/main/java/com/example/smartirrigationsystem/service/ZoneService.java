@@ -7,17 +7,52 @@ import com.example.smartirrigationsystem.entity.SubZone;
 import com.example.smartirrigationsystem.entity.Zone;
 import com.example.smartirrigationsystem.repository.ZoneRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ZoneService {
     private final ZoneRepository zoneRepo;
-    public List<Zone> findAll() { return zoneRepo.findAll(); }
+
+    public List<Zone> findAll() {
+        List<Zone> zoneList = zoneRepo.findAll();
+        zoneList.forEach(zone -> {
+            zone.getSubZones().forEach(subZone -> {
+                subZone.getIrrigationHistoryList().forEach(irrigationHistory -> {
+                    boolean hasIssues = false;
+//                    if (irrigationHistory.getEndTime() == null || irrigationHistory.getStartTime() == null) {
+//                        hasIssues = true;
+//                    } else if (irrigationHistory.getEndTime().isBefore(irrigationHistory.getStartTime())) {
+//                        hasIssues = true;
+//                    }
+                    zone.setHasIssues(hasIssues);
+                });
+            });
+        });
+        return zoneList;
+    }
+
+    public Zone updateZone(Integer id, Zone incoming) {
+        Optional<Zone> optional = zoneRepo.findById(id);
+        if (optional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zone not found with id " + id);
+        }
+
+        Zone existing = optional.get();
+        existing.setName(incoming.getName());
+        existing.setLatitude(incoming.getLatitude());
+        existing.setLongitude(incoming.getLongitude());
+        existing.setExtraInfo(incoming.getExtraInfo());
+
+        return zoneRepo.save(existing);
+    }
 
     @Transactional
     public void ingestSensorData(SensorDataRequest req) {

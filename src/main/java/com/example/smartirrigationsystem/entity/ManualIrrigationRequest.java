@@ -6,6 +6,9 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.Objects;
 import java.time.LocalDateTime;
 
@@ -22,6 +25,7 @@ public class ManualIrrigationRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subzone_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private SubZone subZone;
 
     @Column(name = "requested_at")
