@@ -8,8 +8,6 @@ import reportWebVitals from './reportWebVitals';
 // Instead, import these three:
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
