@@ -52,4 +52,8 @@ public class SubZoneService {
         return subzoneRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SubZone not found with ID: " + id));
     }
+
+    public SubZone save(SubZone s) {
+        return subzoneRepo.save(s);
+    }
 }

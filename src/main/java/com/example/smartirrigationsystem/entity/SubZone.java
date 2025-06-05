@@ -65,11 +65,9 @@ public class SubZone {
     private List<IrrigationHistory> irrigationHistoryList = new ArrayList<>();
 
     private LocalDateTime lastIrrigationIssue;
-
     private Boolean hasIrrigationIssue;
 
-    private int defaultIrrigationDurationInSeconds = 10;
-    private int defaultRecheckIntervalInMinutes = 10;
+    private int defaultIrrigationDurationInSeconds = 30;
 
     @Override
     public boolean equals(Object o) {

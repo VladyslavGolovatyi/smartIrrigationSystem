@@ -1,8 +1,8 @@
 // frontend/src/components/ZoneDetail.jsx
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import axios from 'axios';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import {MapContainer, Marker, TileLayer} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure Bootstrap is loaded
@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function ZoneDetail() {
-    const { id } = useParams();
+    const {id} = useParams();
     const navigate = useNavigate();
     const [zone, setZone] = useState(null);
 
@@ -83,13 +83,13 @@ export default function ZoneDetail() {
                                     center={[zone.latitude, zone.longitude]}
                                     zoom={14}
                                     scrollWheelZoom={false}
-                                    style={{ height: '300px', width: '100%' }}
+                                    style={{height: '300px', width: '100%'}}
                                 >
                                     <TileLayer
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                         attribution="© OpenStreetMap contributors"
                                     />
-                                    <Marker position={[zone.latitude, zone.longitude]} />
+                                    <Marker position={[zone.latitude, zone.longitude]}/>
                                 </MapContainer>
                             ) : (
                                 <div className="text-center p-5 text-danger">
@@ -138,6 +138,7 @@ export default function ZoneDetail() {
                                 <thead>
                                 <tr>
                                     <th scope="col">Index</th>
+                                    <th scope="col">Status</th>
                                     <th scope="col">Name</th>
                                     <th scope="col">Plant</th>
                                     <th scope="col">Soil</th>
@@ -148,6 +149,19 @@ export default function ZoneDetail() {
                                 {zone.subZones.map((sz) => (
                                     <tr key={sz.id}>
                                         <td>{sz.subzoneIndex}</td>
+                                        {/* Status indicator: red if hasIrrigationIssue === true, green otherwise */}
+                                        <td>
+                                                         <span
+                                                             style={{
+                                                                 display: 'inline-block',
+                                                                 width: '12px',
+                                                                 height: '12px',
+                                                                 borderRadius: '50%',
+                                                                 backgroundColor: sz.hasIrrigationIssue ? 'red' : 'green',
+                                                                 marginRight: '8px',
+                                                             }}
+                                                         ></span>
+                                        </td>
                                         <td>{sz.name || '—'}</td>
                                         <td>{sz.plantType?.name || '—'}</td>
                                         <td>{sz.soilType?.name || '—'}</td>

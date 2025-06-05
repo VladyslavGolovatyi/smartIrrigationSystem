@@ -6,9 +6,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ZoneSetupModal from './ZoneSetupModal';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-// Icon URLs for red and green markers:
+// Icon URLs для червоного і зеленого маркерів
 const RED_MARKER_URL =
     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
 const GREEN_MARKER_URL =
@@ -16,15 +16,15 @@ const GREEN_MARKER_URL =
 const SHADOW_URL =
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png';
 
-// Fix default Leaflet icon paths:
+// Фіксимо шляхи до іконок за замовчуванням
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: RED_MARKER_URL, // placeholder; overridden per-marker
+    iconRetinaUrl: RED_MARKER_URL, // placeholder; ми будемо переоприділяти у кожному маркері
     iconUrl: GREEN_MARKER_URL,
     shadowUrl: SHADOW_URL,
 });
 
-// Create red and green icons:
+// Створюємо окремі екземпляри червоної та зеленої іконок:
 const redIcon = new L.Icon({
     iconUrl: RED_MARKER_URL,
     shadowUrl: SHADOW_URL,
@@ -50,37 +50,46 @@ export default function ZonesView() {
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 12;
 
-    // Fetch all zones on mount
+    // Новий стан: поточний користувач і його ролі
+    const [currentUserRoles, setCurrentUserRoles] = useState([]);
+    const navigate = useNavigate();
+
+    // Після першого рендеру:
     useEffect(() => {
+        // 1) Отримуємо список зон
         axios
             .get('/api/zones')
             .then((res) => {
                 setZones(res.data);
+                // Якщо знайшли зону без координат — відкриваємо модалку для введення
                 const missing = res.data.find((z) => z.latitude == null || z.longitude == null);
                 if (missing) setSetupZone(missing);
             })
             .catch(console.error);
-    }, []);
 
-    // Save updated coordinates (or other fields) for a zone
-    const handleSave = (update) => {
+        // 2) Отримуємо поточного користувача, щоб дізнатися ролі:
         axios
-            .put(`/api/zones/${setupZone.id}`, update)
+            .get('/api/current-user')
             .then((res) => {
-                setZones((zs) => zs.map((z) => (z.id === res.data.id ? res.data : z)));
-                setSetupZone(null);
+                console.log('Поточний користувач:', res.data.username, 'Ролі:', res.data.role)
+                // Очікуємо, що res.data = { username: "...", roles: ["VIEWER","MAINTAINER", ...] }
+                setCurrentUserRoles(res.data.role || []);
             })
-            .catch(console.error);
-    };
+            .catch((err) => {
+                console.error('Не вдалося завантажити поточного користувача:', err);
+                // Якщо не залогінений, редіректимо на сторінку входу
+                navigate('/login');
+            });
+    }, [navigate]);
 
     const defaultCenter = [49.8397, 24.0297];
 
-    // Filter zones by name (case-insensitive)
+    // Відфільтровані зони за назвою (case-insensitive)
     const filteredZones = zones.filter((z) =>
         (z.name ?? '').toLowerCase().includes(filter.trim().toLowerCase())
     );
 
-    // Pagination calculations
+    // Розрахунок пагінації
     const totalPages = Math.ceil(filteredZones.length / itemsPerPage);
     const paginatedZones = filteredZones.slice(
         currentPage * itemsPerPage,
@@ -92,10 +101,26 @@ export default function ZonesView() {
         setCurrentPage(page);
     };
 
+    // Допоміжний метод: чи є в користувача роль MAINTAINER або ADMIN?
+    const isAdminOrMaintainer = () => {
+        return currentUserRoles.includes('ADMIN') || currentUserRoles.includes('MAINTAINER');
+    };
+
+    // Збереження оновлених координат (або інших полів) для зони
+    const handleSave = (update) => {
+        axios
+            .put(`/api/zones/${setupZone.id}`, update)
+            .then((res) => {
+                setZones((zs) => zs.map((z) => (z.id === res.data.id ? res.data : z)));
+                setSetupZone(null);
+            })
+            .catch(console.error);
+    };
+
     return (
         <>
             <div className="container py-4">
-                {/* Top Controls: “List” / “Map” buttons + filter input */}
+                {/* Верхній рядок: кнопки List/Map + кнопка Settings для ADMIN/MAINTAINER */}
                 <div className="d-flex align-items-center mb-3">
                     <div className="btn-group me-3" role="group" aria-label="View toggle">
                         <button
@@ -116,6 +141,7 @@ export default function ZonesView() {
                             Map
                         </button>
                     </div>
+
                     {view === 'list' && (
                         <input
                             type="text"
@@ -125,8 +151,15 @@ export default function ZonesView() {
                                 setFilter(e.target.value);
                                 setCurrentPage(0);
                             }}
-                            className="form-control w-50"
+                            className="form-control w-50 me-3"
                         />
+                    )}
+
+                    {/* Якщо користувач ADMIN або MAINTAINER, показуємо кнопку Settings */}
+                    {isAdminOrMaintainer() && (
+                        <Link to="/settings" className="btn btn-secondary ms-auto">
+                            Settings
+                        </Link>
                     )}
                 </div>
 
@@ -243,9 +276,14 @@ export default function ZonesView() {
                 )}
             </div>
 
-            {/* Zone setup modal */}
+            {/* Модалка для вводу координат нової зони, якщо setupZone != null */}
             {setupZone && (
-                <ZoneSetupModal zone={setupZone} markerCoords={null} onSave={handleSave} onCancel={() => setSetupZone(null)} />
+                <ZoneSetupModal
+                    zone={setupZone}
+                    markerCoords={null}
+                    onSave={handleSave}
+                    onCancel={() => setSetupZone(null)}
+                />
             )}
         </>
     );

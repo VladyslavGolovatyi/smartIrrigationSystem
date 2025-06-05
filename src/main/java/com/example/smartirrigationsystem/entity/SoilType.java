@@ -1,5 +1,6 @@
 package com.example.smartirrigationsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class SoilType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +26,8 @@ public class SoilType {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    private Integer waitingTimeBeforeMoistureCheckInMinutes;
 
     @Override
     public boolean equals(Object o) {
