@@ -23,6 +23,7 @@ import org.springframework.web.cors.*;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -162,6 +163,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        cfg.setAllowedOrigins(List.of(
+                "https://smart-irrigation-605037215404.us-central1.run.app"
+        ));
         cfg.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(Arrays.asList("Content-Type","Authorization","X-Requested-With"));
         cfg.setAllowCredentials(true);

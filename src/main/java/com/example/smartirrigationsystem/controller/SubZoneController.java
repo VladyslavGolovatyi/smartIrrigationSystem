@@ -82,4 +82,21 @@ public class SubZoneController {
     public List<SoilMoistureReadingDto> getSoilMoistureReadings(@PathVariable Integer id) {
         return subZoneService.getSoilReadingsForSubzone(id);
     }
+
+    @PutMapping("/{id}/fix-issue")
+    public ResponseEntity<?> fixIrrigationIssue(
+            @PathVariable Integer zoneId,
+            @PathVariable Integer id
+    ) {
+        SubZone existing = subZoneService.findById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+        // Clear the issue flag (and optionally clear the lastIssue date):
+        existing.setHasIrrigationIssue(false);
+        existing.setLastIrrigationIssue(null);
+        // Save only that change:
+        SubZone saved = subZoneService.save(existing);
+        return ResponseEntity.ok(saved);
+    }
 }

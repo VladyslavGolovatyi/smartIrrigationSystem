@@ -11,6 +11,7 @@ import {
     Tooltip,
     ResponsiveContainer,
     ReferenceLine,
+    ReferenceArea,
 } from 'recharts';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -37,11 +38,13 @@ export default function SubzoneDetail() {
             return;
         }
 
+        // Fetch parent Zone (to confirm existence)
         axios
             .get(`/api/zones/${zoneId}`)
             .then((res) => setZone(res.data))
             .catch(() => navigate('/zones'));
 
+        // Fetch this SubZone details
         axios
             .get(`/api/zones/${zoneId}/subzones/${subzoneId}`)
             .then((res) => {
@@ -51,6 +54,7 @@ export default function SubzoneDetail() {
             .catch(() => navigate(`/zones/${zoneId}`));
     }, [zoneId, subzoneId, navigate]);
 
+    // Prepare raw data arrays
     const rawSoil = useMemo(() => {
         if (!subzone) return [];
         return subzone.soilMoistureReadings.map((r) => ({
@@ -75,12 +79,14 @@ export default function SubzoneDetail() {
         }));
     }, [subzone]);
 
+    // Sort each array by time
     useMemo(() => {
         rawSoil.sort((a, b) => a.time - b.time);
         rawRain.sort((a, b) => a.time - b.time);
         rawIrr.sort((a, b) => a.time - b.time);
     }, [rawSoil, rawRain, rawIrr]);
 
+    // Combine soil + rain timestamps
     const mergedTimestamps = useMemo(() => {
         const setT = new Set();
         rawSoil.forEach((pt) => setT.add(pt.time));
@@ -88,10 +94,10 @@ export default function SubzoneDetail() {
         return Array.from(setT).sort((a, b) => a - b);
     }, [rawSoil, rawRain]);
 
+    // Build chartData within selected time range
     const chartData = useMemo(() => {
         const startMs = startTime ? new Date(startTime).getTime() : -Infinity;
         const endMs = endTime ? new Date(endTime).getTime() : Infinity;
-
         return mergedTimestamps
             .filter((t) => t >= startMs && t <= endMs)
             .map((t) => {
@@ -105,12 +111,14 @@ export default function SubzoneDetail() {
             });
     }, [mergedTimestamps, rawSoil, rawRain, startTime, endTime]);
 
+    // Filter irrigation events
     const filteredIrr = useMemo(() => {
         const startMs = startTime ? new Date(startTime).getTime() : -Infinity;
         const endMs = endTime ? new Date(endTime).getTime() : Infinity;
         return rawIrr.filter((pt) => pt.time >= startMs && pt.time <= endMs);
     }, [rawIrr, startTime, endTime]);
 
+    // Time-range presets
     const applyPreset = (preset) => {
         const now = new Date();
         let start, end;
@@ -124,9 +132,9 @@ export default function SubzoneDetail() {
                 .toISOString()
                 .slice(0, 16);
         } else if (preset === '1m') {
-            start = new Date(now.setMonth(now.getMonth() - 1))
-                .toISOString()
-                .slice(0, 16);
+            const past = new Date(now);
+            past.setMonth(past.getMonth() - 1);
+            start = past.toISOString().slice(0, 16);
         } else {
             start = '';
             end = '';
@@ -135,6 +143,7 @@ export default function SubzoneDetail() {
         setEndTime(end);
     };
 
+    // Manually trigger irrigation
     const handleManualIrrigation = () => {
         if (!window.confirm('Trigger manual irrigation?')) return;
         axios
@@ -146,6 +155,16 @@ export default function SubzoneDetail() {
             .catch(console.error);
     };
 
+    // Fix irrigation issue
+    const handleFixIssue = () => {
+        if (!window.confirm('Mark irrigation issue as fixed?')) return;
+         axios
+           .put(`/api/zones/${zoneId}/subzones/${subzoneId}/fix-issue`)
+           .then(() => axios.get(`/api/zones/${zoneId}/subzones/${subzoneId}`))
+           .then((res) => setSubzone(res.data))
+           .catch(console.error);
+    };
+
     if (loading || !subzone) {
         return (
             <div className="d-flex justify-content-center align-items-center vh-100">
@@ -155,6 +174,10 @@ export default function SubzoneDetail() {
             </div>
         );
     }
+
+    // Extract optimal range from plantType
+    const optimalMin = subzone.plantType?.optimalMoistureMin ?? null;
+    const optimalMax = subzone.plantType?.optimalMoistureMax ?? null;
 
     return (
         <div className="container my-5">
@@ -178,19 +201,45 @@ export default function SubzoneDetail() {
                         <strong>Soil Type:</strong> {subzone.soilType?.name || '—'}
                     </p>
                     {subzone.extraInfo && (
-                        <p className="mb-0">
+                        <p className="mb-1">
                             <strong>Extra Info:</strong> {subzone.extraInfo}
                         </p>
                     )}
+                    <p className="text-muted mb-1">
+                        <strong>Default Irrigation Duration (sec):</strong>{' '}
+                        {subzone.defaultIrrigationDurationInSeconds ?? '—'}
+                    </p>
+                    <p className="text-muted mb-1">
+                        <strong>Irrigation Issue:</strong>{' '}
+                        {subzone.hasIrrigationIssue ? 'Yes' : 'No'}
+                    </p>
+                    {subzone.hasIrrigationIssue && subzone.lastIrrigationIssue && (
+                        <p className="text-muted mb-0">
+                            <strong>Last Issue:</strong>{' '}
+                            {new Date(subzone.lastIrrigationIssue).toLocaleString()}
+                        </p>
+                    )}
+
+                    {/* Manual Irrigation & Fix Issue Buttons */}
+                    <div className="mt-3">
+                        <button className="btn btn-warning me-2" onClick={handleManualIrrigation}>
+                            Manual Irrigation
+                        </button>
+                        {subzone.hasIrrigationIssue && (
+                            <button className="btn btn-info" onClick={handleFixIssue}>
+                                Fix Irrigation Issue
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Time Filter, Presets & Toggles */}
+            {/* Data Controls */}
             <div className="card mb-4 shadow-sm">
                 <div className="card-header bg-white">Data Controls</div>
                 <div className="card-body">
                     <div className="row g-3">
-                        {/* Preset buttons */}
+                        {/* Preset Buttons */}
                         <div className="col-12 mb-2">
                             <button
                                 className="btn btn-outline-secondary me-2"
@@ -210,10 +259,7 @@ export default function SubzoneDetail() {
                             >
                                 Last Month
                             </button>
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={() => applyPreset('')}
-                            >
+                            <button className="btn btn-outline-secondary" onClick={() => applyPreset('')}>
                                 Clear
                             </button>
                         </div>
@@ -245,8 +291,6 @@ export default function SubzoneDetail() {
 
                         <div className="col-12">
                             <label className="form-label">Metrics to Display:</label>
-
-                            {/* Vertical list of checkboxes */}
                             <div className="form-check">
                                 <input
                                     className="form-check-input"
@@ -325,6 +369,37 @@ export default function SubzoneDetail() {
 
                             <Tooltip labelFormatter={(label) => new Date(label).toLocaleString()} />
 
+                            {/* Optimal range shading */}
+                            {optimalMin != null && optimalMax != null && (
+                                <ReferenceArea
+                                    y1={optimalMin}
+                                    y2={optimalMax}
+                                    strokeOpacity={0}
+                                    fill="lightgreen"
+                                    fillOpacity={0.3}
+                                />
+                            )}
+
+                            {/* Optimal range lines */}
+                            {optimalMin != null && (
+                                <ReferenceLine
+                                    y={optimalMin}
+                                    yAxisId="left"
+                                    stroke="green"
+                                    strokeDasharray="3 3"
+                                    label={{ value: `Min ${optimalMin}%`, position: 'insideBottomLeft', fill: 'green' }}
+                                />
+                            )}
+                            {optimalMax != null && (
+                                <ReferenceLine
+                                    y={optimalMax}
+                                    yAxisId="left"
+                                    stroke="green"
+                                    strokeDasharray="3 3"
+                                    label={{ value: `Max ${optimalMax}%`, position: 'insideTopLeft', fill: 'green' }}
+                                />
+                            )}
+
                             {showSoil && (
                                 <Line
                                     yAxisId="left"
@@ -353,11 +428,7 @@ export default function SubzoneDetail() {
                                     <ReferenceLine
                                         key={pt.time}
                                         x={pt.time}
-                                        stroke={
-                                            pt.triggeredBy === 'manual'
-                                                ? 'rgba(40, 167, 69, 0.9)'
-                                                : 'rgba(255, 99, 132, 0.8)'
-                                        }
+                                        stroke={pt.triggeredBy === 'manual' ? 'rgba(40, 167, 69, 0.9)' : 'rgba(255, 99, 132, 0.8)'}
                                         strokeDasharray={pt.triggeredBy === 'manual' ? '' : '3 3'}
                                         yAxisId="left"
                                         label={{
@@ -370,13 +441,6 @@ export default function SubzoneDetail() {
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
-            </div>
-
-            {/* Manual Irrigation Button */}
-            <div className="mb-4">
-                <button className="btn btn-warning" onClick={handleManualIrrigation}>
-                    Manual Irrigation
-                </button>
             </div>
         </div>
     );
