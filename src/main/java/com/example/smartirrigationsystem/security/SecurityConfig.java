@@ -108,10 +108,12 @@ public class SecurityConfig {
                 // Authorization rules:
                 .authorizeHttpRequests(authz -> authz
                         // PUBLIC (no auth needed) for static resources
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/index.html", "/static/**", "/favicon.ico").permitAll()
 
                         // ADMIN only: /api/users/**
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico", "/manifest.json", "/logo192.png", "/logo512.png").permitAll()
+                        .requestMatchers("/login", "/logout").permitAll()
 
                         // VIEWER+ (GET) on /api/zones/**
                         .requestMatchers(HttpMethod.GET, "/api/zones/**")

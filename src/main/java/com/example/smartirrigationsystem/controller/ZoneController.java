@@ -16,7 +16,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/zones")
 @RequiredArgsConstructor
-@CrossOrigin("http://localhost:3000")
 public class ZoneController {
     private final ZoneService zoneService;
     private final ZoneRepository zoneRepo;

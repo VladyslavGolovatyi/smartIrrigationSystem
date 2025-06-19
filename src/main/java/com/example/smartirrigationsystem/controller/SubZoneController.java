@@ -17,7 +17,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/zones/{zoneId}/subzones")
 @RequiredArgsConstructor
-@CrossOrigin("http://localhost:3000")
 public class SubZoneController {
     private final SubZoneService subZoneService;
     private final PlantTypeRepository plantTypeRepo;
