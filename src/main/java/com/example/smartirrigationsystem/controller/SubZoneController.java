@@ -99,4 +99,14 @@ public class SubZoneController {
         SubZone saved = subZoneService.save(existing);
         return ResponseEntity.ok(saved);
     }
+
+    // trigger manual irrigation for a subzone
+    @PostMapping("/{id}/manual-irrigation")
+    public ResponseEntity<?> triggerManualIrrigation(
+            @PathVariable Integer zoneId,
+            @PathVariable Integer id
+    ) {
+        subZoneService.triggerManualIrrigation(id);
+        return ResponseEntity.ok("Manual irrigation triggered for subzone " + id);
+    }
 }

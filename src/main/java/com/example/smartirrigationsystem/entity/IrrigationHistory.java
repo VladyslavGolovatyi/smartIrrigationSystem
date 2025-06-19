@@ -40,9 +40,8 @@ public class IrrigationHistory {
     @Enumerated(EnumType.STRING)
     private TriggeredBy triggeredBy;
 
-    public enum TriggeredBy {
-        auto, manual
-    }
+    private Integer durationSeconds;
+
 
     @Override
     public boolean equals(Object o) {

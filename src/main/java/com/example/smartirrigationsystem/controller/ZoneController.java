@@ -1,5 +1,6 @@
 package com.example.smartirrigationsystem.controller;
 
+import com.example.smartirrigationsystem.dto.PlannedIrrigationResponse;
 import com.example.smartirrigationsystem.dto.SensorDataRequest;
 import com.example.smartirrigationsystem.entity.Zone;
 import com.example.smartirrigationsystem.repository.ZoneRepository;
@@ -32,12 +33,14 @@ public class ZoneController {
     }
 
     @PostMapping("/readings")
-    public ResponseEntity<Void> receiveSensorData(@RequestBody SensorDataRequest request) {
+    public ResponseEntity<PlannedIrrigationResponse> receiveSensorData(@RequestBody SensorDataRequest request) {
         if (request.getControllerUid() == null || request.getSubZones() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sensor data request");
         }
         zoneService.ingestSensorData(request);
-        return ResponseEntity.ok().build();
+        List<PlannedIrrigationResponse.SubZonePlan> subZonePlans = zoneService.calculatePlannedIrrigation(request.getControllerUid());
+        PlannedIrrigationResponse response = new PlannedIrrigationResponse(subZonePlans);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

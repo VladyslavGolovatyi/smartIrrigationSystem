@@ -98,15 +98,23 @@ export default function SubzoneDetail() {
     const chartData = useMemo(() => {
         const startMs = startTime ? new Date(startTime).getTime() : -Infinity;
         const endMs = endTime ? new Date(endTime).getTime() : Infinity;
+
+        let lastSoil = null;
+        let lastRain = null;
+
         return mergedTimestamps
             .filter((t) => t >= startMs && t <= endMs)
             .map((t) => {
                 const soilPoint = rawSoil.find((pt) => pt.time === t);
                 const rainPoint = rawRain.find((pt) => pt.time === t);
+
+                if (soilPoint) lastSoil = soilPoint.soil;
+                if (rainPoint) lastRain = rainPoint.rain;
+
                 return {
                     time: t,
-                    soil: soilPoint ? soilPoint.soil : null,
-                    rain: rainPoint ? rainPoint.rain : null,
+                    soil: lastSoil,
+                    rain: lastRain,
                 };
             });
     }, [mergedTimestamps, rawSoil, rawRain, startTime, endTime]);
@@ -118,19 +126,25 @@ export default function SubzoneDetail() {
         return rawIrr.filter((pt) => pt.time >= startMs && pt.time <= endMs);
     }, [rawIrr, startTime, endTime]);
 
-    // Time-range presets
     const applyPreset = (preset) => {
-        const now = new Date();
+        const nowUtc = new Date();
+
+        // Kyiv timezone offset in minutes
+        const kyivOffsetMin = -nowUtc.getTimezoneOffset(); // will reflect local user's zone
+        const kyivOffsetMs = kyivOffsetMin * 60 * 1000;
+
+        // Kyiv local time
+        const now = new Date(nowUtc.getTime() + kyivOffsetMs);
+
         let start, end;
-        end = now.toISOString().slice(0, 16);
+        //end = now.toISOString().slice(0, 16);
+
         if (preset === '24h') {
-            start = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-                .toISOString()
-                .slice(0, 16);
+            start = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
         } else if (preset === '7d') {
-            start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                .toISOString()
-                .slice(0, 16);
+            start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+        } else if (preset === '10min') {
+            start = new Date(now.getTime() - 10 * 60 * 1000).toISOString().slice(0, 16);
         } else if (preset === '1m') {
             const past = new Date(now);
             past.setMonth(past.getMonth() - 1);
@@ -139,18 +153,28 @@ export default function SubzoneDetail() {
             start = '';
             end = '';
         }
+
         setStartTime(start);
         setEndTime(end);
     };
+
 
     // Manually trigger irrigation
     const handleManualIrrigation = () => {
         if (!window.confirm('Trigger manual irrigation?')) return;
         axios
-            .post(`/api/zones/${zoneId}/subzones/${subzoneId}/irrigations`, {
+            .post(`/api/zones/${zoneId}/subzones/${subzoneId}/manual-irrigation`, {
                 triggeredBy: 'manual',
             })
             .then(() => axios.get(`/api/zones/${zoneId}/subzones/${subzoneId}`))
+            .then((res) => setSubzone(res.data))
+            .catch(console.error);
+    };
+
+    // Refresh chart data without resetting controls
+    const handleRefresh = () => {
+        axios
+            .get(`/api/zones/${zoneId}/subzones/${subzoneId}`)
             .then((res) => setSubzone(res.data))
             .catch(console.error);
     };
@@ -243,6 +267,12 @@ export default function SubzoneDetail() {
                         <div className="col-12 mb-2">
                             <button
                                 className="btn btn-outline-secondary me-2"
+                                onClick={() => applyPreset('10min')}
+                            >
+                                Last 10min
+                            </button>
+                            <button
+                                className="btn btn-outline-secondary me-2"
                                 onClick={() => applyPreset('24h')}
                             >
                                 Last 24h
@@ -259,10 +289,20 @@ export default function SubzoneDetail() {
                             >
                                 Last Month
                             </button>
-                            <button className="btn btn-outline-secondary" onClick={() => applyPreset('')}>
+                            <button
+                                className="btn btn-outline-secondary"
+                                onClick={() => applyPreset('')}
+                            >
                                 Clear
                             </button>
+                            <button
+                                className="btn btn-outline-primary ms-2"
+                                onClick={handleRefresh}
+                            >
+                                🔄 Refresh Chart
+                            </button>
                         </div>
+
 
                         <div className="col-md-6">
                             <label htmlFor="startTime" className="form-label">

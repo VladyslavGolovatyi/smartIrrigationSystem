@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.*;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -60,6 +61,7 @@ public class SecurityConfig {
 
                 // Plug in our DaoAuthenticationProvider
                 .authenticationProvider(authProvider)
+                .httpBasic(Customizer.withDefaults())
 
                 // Custom formLogin: return 200 on success, 401 on failure
                 .formLogin(form -> form
@@ -113,14 +115,14 @@ public class SecurityConfig {
 
                         // VIEWER+ (GET) on /api/zones/**
                         .requestMatchers(HttpMethod.GET, "/api/zones/**")
-                        .hasAnyRole("VIEWER","MAINTAINER","ADMIN")
+                        .hasAnyRole("VIEWER","MAINTAINER","ADMIN", "ESP_NODE")
 
                         // MAINTAINER+ (POST/PUT/DELETE) on /api/zones/**
-                        .requestMatchers(HttpMethod.POST, "/api/zones/**")
+                        .requestMatchers(HttpMethod.POST)
+                        .hasAnyRole("MAINTAINER","ADMIN", "ESP_NODE")
+                        .requestMatchers(HttpMethod.PUT)
                         .hasAnyRole("MAINTAINER","ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/zones/**")
-                        .hasAnyRole("MAINTAINER","ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/zones/**")
+                        .requestMatchers(HttpMethod.DELETE)
                         .hasAnyRole("MAINTAINER","ADMIN")
 
 
@@ -162,8 +164,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        cfg.setAllowedOrigins(List.of(
+        cfg.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
                 "https://smart-irrigation-605037215404.us-central1.run.app"
         ));
         cfg.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));

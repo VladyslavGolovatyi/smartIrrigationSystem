@@ -34,7 +34,10 @@ public class ManualIrrigationRequest {
     @Column(name = "duration_seconds", nullable = false)
     private Integer durationSeconds;
 
-    private Boolean executed;
+    private Boolean executed = false;
+
+    @Enumerated(EnumType.STRING)
+    private TriggeredBy triggeredBy;
 
     @Override
     public boolean equals(Object o) {
