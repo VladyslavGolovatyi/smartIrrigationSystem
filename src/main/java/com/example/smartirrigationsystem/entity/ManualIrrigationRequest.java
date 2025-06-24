@@ -24,14 +24,14 @@ public class ManualIrrigationRequest {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subzone_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "subzone_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private SubZone subZone;
 
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
 
-    @Column(name = "duration_seconds", nullable = false)
+    @Column(name = "duration_seconds")
     private Integer durationSeconds;
 
     private Boolean executed = false;

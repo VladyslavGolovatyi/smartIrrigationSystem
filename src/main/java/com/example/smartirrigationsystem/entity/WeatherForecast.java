@@ -24,8 +24,8 @@ public class WeatherForecast {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "zone_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "zone_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Zone zone;
 
     @Column(name = "fetched_at", nullable = false)

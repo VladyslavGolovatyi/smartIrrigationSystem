@@ -25,9 +25,9 @@ public class IrrigationHistory {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subzone_id", nullable = false)
+    @JoinColumn(name = "subzone_id")
     @JsonBackReference
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private SubZone subZone;
 
     @Column(name = "start_time", nullable = false)

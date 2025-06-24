@@ -32,6 +32,9 @@ public class DataInitializer {
             if (roleRepo.findByName("ROLE_VIEWER").isEmpty()) {
                 roleRepo.save(new Role(null, "ROLE_VIEWER"));
             }
+            if (roleRepo.findByName("ROLE_ESP_NODE").isEmpty()) {
+                roleRepo.save(new Role(null, "ROLE_ESP_NODE"));
+            }
 
             // 2) Створимо дефолтного адміністратора, якщо його немає
             if (userRepo.findByUsername("admin").isEmpty()) {
@@ -45,6 +48,16 @@ public class DataInitializer {
 
                 userRepo.save(admin);
                 System.out.println("Default admin created: username=admin, password=admin123");
+            }
+            if (userRepo.findByUsername("espNode").isEmpty()) {
+                Role adminRole = roleRepo.findByName("ROLE_ESP_NODE")
+                        .orElseThrow(() -> new RuntimeException("ROLE_ESP_NODE not found"));
+                User admin = new User();
+                admin.setUsername("espNode");
+                admin.setPasswordHash(passwordEncoder.encode("pass"));
+                admin.setRole(adminRole);
+
+                userRepo.save(admin);
             }
         };
     }

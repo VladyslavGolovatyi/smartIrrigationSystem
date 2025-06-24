@@ -28,9 +28,9 @@ public class SubZone {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "zone_id", nullable = false)
+    @JoinColumn(name = "zone_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JsonBackReference
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Zone zone;
 
     @Column(length = 100)
@@ -41,12 +41,12 @@ public class SubZone {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plant_type_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private PlantType plantType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "soil_type_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private SoilType soilType;
 
     @Column(columnDefinition = "TEXT")

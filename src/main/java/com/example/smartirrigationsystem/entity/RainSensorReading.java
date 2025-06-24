@@ -25,9 +25,8 @@ public class RainSensorReading {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subzone_id", nullable = false)
+    @JoinColumn(name = "subzone_id")
     @JsonBackReference
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private SubZone subZone;
 
     @Column(name = "is_raining", nullable = false)
